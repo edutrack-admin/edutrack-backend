@@ -1,5 +1,5 @@
-import Attendance from '../models/Attendance.js';
-import Assessment from '../models/Assessment.js';
+import Attendance from '../models/attendance.js';
+import Assessment from '../models/assessment.js';
 import Archive from '../models/archive.js';
 
 /**

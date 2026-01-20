@@ -1,6 +1,6 @@
 import XLSX from 'xlsx';
-import Attendance from '../models/Attendance.js';
-import Assessment from '../models/Assessment.js';
+import Attendance from '../models/attendance.js';
+import Assessment from '../models/assessment.js';
 import User from '../models/user.js';
 
 /**
