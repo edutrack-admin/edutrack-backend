@@ -15,13 +15,11 @@ router.post('/professor', async (req, res) => {
   try {
     const { fullName, email, subject, temporaryPassword } = req.body;
 
-    // Check if user exists
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
-    // Create professor
     const professor = await User.create({
       fullName,
       email,
@@ -29,21 +27,38 @@ router.post('/professor', async (req, res) => {
       userType: 'professor',
       subject,
       createdBy: req.user._id,
-      isTemporaryPassword: true
+      isTemporaryPassword: true,
     });
+
+    // 📧 Send email (non-blocking)
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Your EduTracker Professor Account',
+        html: accountCreatedEmail({
+          fullName,
+          email,
+          tempPassword: temporaryPassword,
+          userType: 'Professor',
+        }),
+      });
+    } catch (emailError) {
+      console.error('Professor email failed:', emailError);
+    }
 
     res.status(201).json({
       _id: professor._id,
       fullName: professor.fullName,
       email: professor.email,
       subject: professor.subject,
-      message: 'Professor created successfully'
+      message: 'Professor created successfully',
     });
   } catch (error) {
-    console.error(error);
+    console.error('Create professor error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 // @route   POST /api/users/student
 // @desc    Create student account
@@ -52,13 +67,11 @@ router.post('/student', async (req, res) => {
   try {
     const { fullName, email, role, temporaryPassword } = req.body;
 
-    // Check if user exists
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
-    // Create student
     const student = await User.create({
       fullName,
       email,
@@ -66,21 +79,39 @@ router.post('/student', async (req, res) => {
       userType: 'student',
       role,
       createdBy: req.user._id,
-      emailVerified: true
+      isTemporaryPassword: true,
+      emailVerified: true,
     });
+
+    // 📧 Send email (non-blocking)
+    try {
+      await sendEmail({
+        to: email,
+        subject: 'Your EduTracker Student Account',
+        html: accountCreatedEmail({
+          fullName,
+          email,
+          tempPassword: temporaryPassword,
+          userType: 'Student',
+        }),
+      });
+    } catch (emailError) {
+      console.error('Student email failed:', emailError);
+    }
 
     res.status(201).json({
       _id: student._id,
       fullName: student.fullName,
       email: student.email,
       role: student.role,
-      message: 'Student created successfully'
+      message: 'Student created successfully',
     });
   } catch (error) {
-    console.error(error);
+    console.error('Create student error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 // @route   GET /api/users/professors
 // @desc    Get all professors
