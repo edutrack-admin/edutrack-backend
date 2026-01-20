@@ -12,14 +12,11 @@ connectDB();
 const app = express();
 
 // Middleware
-import cors from "cors";
-
 app.use(
   cors({
     origin: [
       "http://localhost:3000",
       "http://localhost:5173",
-      "https://your-frontend-domain.onrender.com"
     ],
     credentials: true,
   })
