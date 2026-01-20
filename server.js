@@ -12,9 +12,19 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+import cors from "cors";
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "https://your-frontend-domain.onrender.com"
+    ],
+    credentials: true,
+  })
+);
+
 
 // Import routes
 import authRoutes from './routes/auth.js';
