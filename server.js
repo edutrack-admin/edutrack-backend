@@ -11,16 +11,23 @@ connectDB();
 
 const app = express();
 
-// Middleware
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-    ],
-    credentials: true,
-  })
-);
+// ⚠️ IMPORTANT: CORS must be configured BEFORE routes
+app.use(cors({
+  origin: '*', // Allow all origins (for testing)
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Body parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
 
 // Import routes
@@ -33,12 +40,30 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/archive', archiveRoutes);
 
+// Root route - MUST work!
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    message: 'EduTracker API is running!',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     message: 'EduTracker API is running',
     timestamp: new Date().toISOString()
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  console.log(`404 - ${req.method} ${req.path}`);
+  res.status(404).json({ 
+    error: 'Not found',
+    path: req.path
   });
 });
 
