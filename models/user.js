@@ -24,19 +24,36 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'professor', 'student'],
     required: true
   },
-  // Professor-specific fields
+  // Professor-specific field
   subject: {
     type: String,
-    required: function() {
-      return this.userType === 'professor';
+    trim: true,
+    default: undefined,
+    validate: {
+      validator: function(v) {
+        // Only required for professors
+        if (this.userType === 'professor') {
+          return v && v.length > 0;
+        }
+        return true; // not required for others
+      },
+      message: 'Subject is required for professors'
     }
   },
-  // Student-specific fields
+  // Student-specific field
   role: {
     type: String,
     enum: ['president', 'vp', 'secretary'],
-    required: function() {
-      return this.userType === 'student';
+    default: undefined,
+    validate: {
+      validator: function(v) {
+        // Only required for students
+        if (this.userType === 'student') {
+          return v && v.length > 0;
+        }
+        return true; // not required for others
+      },
+      message: 'Role is required for students'
     }
   },
   emailVerified: {
@@ -62,7 +79,6 @@ userSchema.pre('save', async function () {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
-
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
