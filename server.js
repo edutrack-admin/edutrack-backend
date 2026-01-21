@@ -9,6 +9,15 @@ dotenv.config();
 // Connect to MongoDB
 connectDB();
 
+/* 🔑 VERIFY SMTP ON STARTUP — ADD THIS BLOCK */
+transporter.verify((err, success) => {
+  if (err) {
+    console.error('❌ SMTP VERIFY FAILED:', err);
+  } else {
+    console.log('✅ SMTP server is ready to send emails');
+  }
+});
+
 const app = express();
 
 // ⚠️ IMPORTANT: CORS must be configured BEFORE routes
