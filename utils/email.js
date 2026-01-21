@@ -1,25 +1,15 @@
 import nodemailer from 'nodemailer';
 
 export const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // MUST be false for 587
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-
-  // 🔑 REQUIRED on Render
-  tls: {
-    rejectUnauthorized: false,
-    minVersion: 'TLSv1.2',
-  },
-
-  // ⏱ Prevent Render from killing the connection
-  connectionTimeout: 10000, // 10s
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
 });
+
 
 /**
  * Send email helper
