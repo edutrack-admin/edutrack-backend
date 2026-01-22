@@ -33,11 +33,14 @@ app.use((req, res, next) => {
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
 import archiveRoutes from './routes/archive.js';
+import assessmentRoutes from './routes/assessments.js';
+
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/archive', archiveRoutes);
+app.use('/api/assessments', assessmentRoutes);
 
 // Root route - MUST work!
 app.get('/', (req, res) => {

@@ -113,7 +113,6 @@ router.post('/student', async (req, res) => {
   }
 });
 
-
 // @route   GET /api/users/professors
 // @desc    Get all professors
 // @access  Admin only
@@ -170,5 +169,12 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// GET /api/users/professors-public
+router.get('/professors-public', authMiddleware, async (req, res) => {
+  const professors = await User.find({ role: 'professor' }).select('fullName subject email').lean();
+  res.json(professors);
+});
+
 
 export default router;
