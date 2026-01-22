@@ -1,6 +1,6 @@
 import express from 'express';
 import User from '../models/user.js';
-import { protect, adminOnly } from '../middleware/auth.js';
+import { protect, adminOnly, studentOnly } from '../middleware/auth.js';
 import { sendEmail, accountCreatedEmail } from '../utils/email.js';
 
 const router = express.Router();
@@ -171,10 +171,9 @@ router.delete('/:id', async (req, res) => {
 });
 
 // GET /api/users/professors-public
-router.get('/professors-public', authMiddleware, async (req, res) => {
+router.get('/professors-public', studentOnly, async (req, res) => {
   const professors = await User.find({ role: 'professor' }).select('fullName subject email').lean();
   res.json(professors);
 });
-
 
 export default router;
