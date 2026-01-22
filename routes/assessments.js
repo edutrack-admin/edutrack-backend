@@ -1,8 +1,7 @@
 // routes/assessments.js
 import express from 'express';
 import Assessment from '../models/assessment.js';
-import { protect } from '../middleware/auth.js';
-import { studentOnly } from '../middleware/studentOnly.js';
+import { protect, studentOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
