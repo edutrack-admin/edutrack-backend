@@ -34,11 +34,13 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
 import archiveRoutes from './routes/archive.js';
 import assessmentRoutes from './routes/assessments.js';
+import publicRoutes from './routes/public.js';
 
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/public', publicRoutes);
 app.use('/api/archive', archiveRoutes);
 app.use('/api/assessments', assessmentRoutes);
 

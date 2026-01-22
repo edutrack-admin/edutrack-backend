@@ -7,13 +7,6 @@ const router = express.Router();
 
 // All routes are protected and admin-only
 router.use(protect);
-
-// GET /api/users/professors-public
-router.get('/professors-public', protect, studentOnly, async (req, res) => {
-  const professors = await User.find({ role: 'professor' }).select('fullName subject email').lean();
-  res.json(professors);
-});
-
 router.use(adminOnly);
 
 // @route   POST /api/users/professor
