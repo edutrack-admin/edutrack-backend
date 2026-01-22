@@ -18,6 +18,10 @@ const assessmentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  classDateTime: {
+  type: Date,
+  required: true
+  },
   student: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

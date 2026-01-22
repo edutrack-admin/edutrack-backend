@@ -81,15 +81,24 @@ export const exportAssessmentsToExcel = async (professorId = null) => {
       .lean();
 
     const data = assessments.map(assessment => ({
-      'Date': new Date(assessment.createdAt).toLocaleDateString(),
-      'Professor': assessment.professorName,
-      'Subject': assessment.subject || 'N/A',
-      'Student Name': assessment.studentName,
-      'Student Role': assessment.studentRole,
-      'Average Rating': assessment.averageRating || 0,
-      'Total Score': assessment.totalScore || 0,
-      'Comments': assessment.comments || ''
-    }));
+  'Submitted On': assessment.submittedAt
+    ? new Date(assessment.submittedAt).toLocaleString([], {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : new Date(assessment.createdAt).toLocaleString(),
+  'Professor': assessment.professorName || assessment.professor?.fullName || 'N/A',
+  'Subject': assessment.subject || assessment.professor?.subject || 'N/A',
+  'Student Name': assessment.studentName,
+  'Student Role': assessment.studentRole,
+  'Average Rating': assessment.averageRating || 0,
+  'Total Score': assessment.totalScore || 0,
+  'Comments': assessment.comments || ''
+}));
+
 
     if (data.length === 0) {
       data.push({
@@ -223,12 +232,20 @@ export const generateMonthlyReport = async (year, month) => {
     XLSX.utils.book_append_sheet(wb, attendanceWs, 'Attendance');
 
     // Assessment sheet
-    const assessmentData = assessmentRecords.map(assessment => ({
-      'Date': new Date(assessment.createdAt).toLocaleDateString(),
-      'Professor': assessment.professorName,
-      'Average Rating': assessment.averageRating,
-      'Student': assessment.studentName
-    }));
+  const assessmentData = assessmentRecords.map(assessment => ({
+  'Submitted On': assessment.submittedAt
+    ? new Date(assessment.submittedAt).toLocaleString([], {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    : new Date(assessment.createdAt).toLocaleString(),
+  'Professor': assessment.professorName || assessment.professor?.fullName || 'N/A',
+  'Average Rating': assessment.averageRating,
+  'Student': assessment.studentName
+}));
 
     if (assessmentData.length === 0) {
       assessmentData.push({
