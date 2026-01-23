@@ -13,32 +13,36 @@ export const exportAttendanceToExcel = async (professorId = null, startDate = nu
     const filter = {};
 
     if (professorId) {
-      filter.professor = professorId;
+      filter.professorId = professorId;
     }
     
-    if (startDate) {
-      filter.date = { ...filter.date, $gte: startDate };
-    }
-    
-    if (endDate) {
-      filter.date = { ...filter.date, $lte: endDate };
-    }
+    if (startDate || endDate) {
+    filter.startTime = {};
+    if (startDate) filter.startTime.$gte = new Date(startDate);
+    if (endDate) filter.startTime.$lte = new Date(endDate);
+  }
 
     const records = await Attendance.find(filter)
+      .populate('professorId', 'fullName email')
       .sort({ date: -1 })
       .lean();
 
     const data = records.map(record => ({
-      'Date': record.date,
-      'Time': record.time,
-      'Professor': record.professorName,
-      'Subject': record.subject || 'N/A',
-      'Class Name': record.className,
-      'Time-in Photo': record.timeInPhoto || '',
-      'Time-out Photo': record.timeOutPhoto || '',
-      'Status': record.status || 'Present',
+      'Start Time': record.startTime
+        ? new Date(record.startTime).toLocaleString()
+        : '',
+      'End Time': record.endTime
+        ? new Date(record.endTime).toLocaleString()
+        : '',
+      'Professor ID': record.professorId || 'N/A',
+      'Subject': record.subject,
+      'Section': record.section,
+      'Classroom': record.classRoom || '',
+      'Duration (seconds)': record.duration || 0,
+      'Status': record.status,
       'Notes': record.notes || ''
     }));
+
 
     if (data.length === 0) {
       data.push({
@@ -222,11 +226,26 @@ export const generateMonthlyReport = async (year, month) => {
       }
     }).lean();
 
+    // ✅ Pull current active users (for export filtering)
+    const [activeProfessors, activeStudents] = await Promise.all([
+      User.find({ userType: 'professor' }).select('_id').lean(),
+      User.find({ userType: 'student' }).select('_id').lean()
+    ]);
+
+    const validProfessorIds = new Set(activeProfessors.map(p => p._id.toString()));
+    const validStudentIds = new Set(activeStudents.map(s => s._id.toString()));
+
+
     // Create workbook
     const wb = XLSX.utils.book_new();
 
+    const validAttendanceRecords = attendanceRecords.filter(record => {
+      if (!record.professor) return false;
+      return validProfessorIds.has(record.professor.toString());
+    });
+
     // Attendance sheet
-    const attendanceData = attendanceRecords.map(record => ({
+    const attendanceData = validAttendanceRecords.map(record => ({
       'Date': record.date,
       'Professor': record.professorName,
       'Subject': record.subject,
@@ -247,8 +266,15 @@ export const generateMonthlyReport = async (year, month) => {
     const attendanceWs = XLSX.utils.json_to_sheet(attendanceData);
     XLSX.utils.book_append_sheet(wb, attendanceWs, 'Attendance');
 
+    const validAssessmentRecords = assessmentRecords.filter(a => {
+      if (!a.professor || !a.student) return false;
+      return (
+        validProfessorIds.has(a.professor.toString()) &&
+        validStudentIds.has(a.student.toString())
+      );
+    });
     // Assessment sheet
-  const assessmentData = assessmentRecords.map(assessment => ({
+  const assessmentData = validAssessmentRecords.map(assessment => ({
   'Submitted On': assessment.submittedAt
     ? new Date(assessment.submittedAt).toLocaleString([], {
         year: 'numeric',
