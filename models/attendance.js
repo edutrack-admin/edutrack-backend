@@ -189,11 +189,10 @@ attendanceSchema.statics.getBySubject = async function(professorId, startDate, e
 };
 
 // Pre-save hook to ensure duration is calculated
-attendanceSchema.pre('save', function(next) {
+attendanceSchema.pre('save', function() {
   if (this.startTime && this.endTime && !this.duration) {
     this.calculateDuration();
   }
-  next();
 });
 
 // Ensure virtuals are included in JSON
