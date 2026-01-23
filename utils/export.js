@@ -75,34 +75,49 @@ export const exportAttendanceToExcel = async (professorId = null, startDate = nu
 export const exportAssessmentsToExcel = async (professorId = null) => {
   try {
     const filter = professorId ? { professor: professorId } : {};
-
     const assessments = await Assessment.find(filter)
       .sort({ createdAt: -1 })
       .lean();
 
-    const data = assessments.map(assessment => ({
-  'Submitted On': assessment.submittedAt
-    ? new Date(assessment.submittedAt).toLocaleString([], {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    : new Date(assessment.createdAt).toLocaleString(),
-  'Professor': assessment.professorName || assessment.professor?.fullName || 'N/A',
-  'Subject': assessment.subject || assessment.professor?.subject || 'N/A',
-  'Student Name': assessment.studentName,
-  'Student Role': assessment.studentRole,
-  'Average Rating': assessment.averageRating || 0,
-  'Total Score': assessment.totalScore || 0,
-  'Comments': assessment.comments || ''
-}));
+    if (!assessments.length) {
+      return { success: true, filename: `assessments_${new Date().toISOString().split('T')[0]}.xlsx`, buffer: null };
+    }
 
+    // Fetch all current professors and students once for efficiency
+    const [currentProfessors, currentStudents] = await Promise.all([
+      User.find({ userType: 'professor' }).select('_id').lean(),
+      User.find({ userType: 'student' }).select('_id').lean()
+    ]);
 
+    const validProfessorIds = new Set(currentProfessors.map(p => p._id.toString()));
+    const validStudentIds = new Set(currentStudents.map(s => s._id.toString()));
+
+    // Filter assessments to include only those with active professor & student
+    const validAssessments = assessments.filter(a =>
+      validProfessorIds.has(a.professor.toString()) &&
+      validStudentIds.has(a.student.toString())
+    );
+
+    const data = validAssessments.map(assessment => ({
+      'Submitted On': assessment.submittedAt
+        ? new Date(assessment.submittedAt).toLocaleString([], {
+            year: 'numeric', month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          })
+        : new Date(assessment.createdAt).toLocaleString(),
+      'Professor': assessment.professorName || 'N/A',
+      'Subject': assessment.subject || 'N/A',
+      'Student Name': assessment.studentName,
+      'Student Role': assessment.studentRole,
+      'Average Rating': assessment.averageRating || 0,
+      'Total Score': assessment.totalScore || 0,
+      'Comments': assessment.comments || ''
+    }));
+
+    // Handle empty export
     if (data.length === 0) {
       data.push({
-        'Date': 'No data available',
+        'Submitted On': 'No data available',
         'Professor': '',
         'Subject': '',
         'Student Name': '',
@@ -121,6 +136,7 @@ export const exportAssessmentsToExcel = async (professorId = null) => {
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
     return { success: true, filename, buffer };
+
   } catch (error) {
     console.error('Export error:', error);
     return { success: false, error: error.message };

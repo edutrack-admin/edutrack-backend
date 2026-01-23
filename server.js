@@ -35,6 +35,7 @@ import userRoutes from './routes/user.js';
 import archiveRoutes from './routes/archive.js';
 import assessmentRoutes from './routes/assessments.js';
 import publicRoutes from './routes/public.js';
+import attendanceRoutes from './routes/attendance.js';
 
 
 // Routes
@@ -43,6 +44,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/archive', archiveRoutes);
 app.use('/api/assessments', assessmentRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 // Root route - MUST work!
 app.get('/', (req, res) => {
