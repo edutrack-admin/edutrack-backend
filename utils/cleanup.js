@@ -1,3 +1,4 @@
+import { v2 as cloudinary } from 'cloudinary';
 import Attendance from '../models/attendance.js';
 import Assessment from '../models/assessment.js';
 import Archive from '../models/archive.js';
@@ -81,7 +82,7 @@ export const executeMonthlyCleanup = async () => {
     const lastMonthDate = getPreviousMonthDate();
     
     // Delete old data
-    const attendanceCount = await deleteOldAttendance(lastMonthDate);
+    const attendanceResult = await deleteOldAttendance(lastMonthDate);
     const assessmentCount = await deleteOldAssessments(lastMonthDate);
     
     // Mark cleanup as executed
@@ -90,7 +91,12 @@ export const executeMonthlyCleanup = async () => {
       { month: lastMonth },
       {
         cleanupExecuted: true,
-        cleanupAt: new Date()
+        cleanupAt: new Date(),
+        deletedRecords: {
+          attendance: attendanceResult.count,
+          assessments: assessmentCount,
+          images: attendanceResult.imagesDeleted
+        }
       }
     );
     
@@ -98,7 +104,12 @@ export const executeMonthlyCleanup = async () => {
     return {
       success: true,
       message: `Cleanup completed. Deleted ${attendanceCount} attendance records and ${assessmentCount} assessments.`,
-      archivedMonth: lastMonth
+      archivedMonth: lastMonth,
+      details: {
+        attendanceRecords: attendanceResult.count,
+        assessments: assessmentCount,
+        cloudinaryImages: attendanceResult.imagesDeleted
+      }
     };
   } catch (error) {
     console.error('Cleanup error:', error);
