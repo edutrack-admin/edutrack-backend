@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
+import { startCleanupScheduler } from './utils/cleanupScheduler.js';
 
 // Load environment variables
 dotenv.config();
@@ -36,6 +37,7 @@ import archiveRoutes from './routes/archive.js';
 import assessmentRoutes from './routes/assessments.js';
 import publicRoutes from './routes/public.js';
 import attendanceRoutes from './routes/attendance.js';
+import cleanupRoutes from './routes/cleanup.js';
 
 
 // Routes
@@ -45,6 +47,7 @@ app.use('/api/public', publicRoutes);
 app.use('/api/archive', archiveRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/cleanup', cleanupRoutes);
 
 // Root route - MUST work!
 app.get('/', (req, res) => {
@@ -82,8 +85,27 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('✓ MongoDB connected');
+    
+    // Start cleanup scheduler AFTER database connection
+    startCleanupScheduler();
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+  });
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, stopping cleanup scheduler...');
+  stopCleanupScheduler();
+  process.exit(0);
 });

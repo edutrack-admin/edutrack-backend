@@ -11,57 +11,73 @@ const safeFilename = (name = 'Unknown') =>
  * Export utilities for generating Excel files
  */
 
-export const exportAttendance = async (professorId = null, startDate = null, endDate = null) => {
+export const exportAttendance = async (
+  professorId = null,
+  startDate = null,
+  endDate = null
+) => {
   try {
     const filter = { status: 'completed' };
 
     const formatDurationHMS = (seconds) => {
-    const s = Number(seconds || 0);
-    const hours = Math.floor(s / 3600);
-    const minutes = Math.floor((s % 3600) / 60);
-    const secs = s % 60;
+      const s = Number(seconds || 0);
+      const hours = Math.floor(s / 3600);
+      const minutes = Math.floor((s % 3600) / 60);
+      const secs = s % 60;
 
-    if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
-    if (minutes > 0) return `${minutes}m ${secs}s`;
-    return `${secs}s`;
-  };
-    // Export only one professor
-    if (professorId) {
+      if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
+      if (minutes > 0) return `${minutes}m ${secs}s`;
+      return `${secs}s`;
+    };
+
+    // ✅ ONLY apply professorId if it's valid
+    if (professorId && mongoose.isValidObjectId(professorId)) {
       filter.professorId = professorId;
     }
 
-    if (startDate) filter.startTime = { ...filter.startTime, $gte: new Date(startDate) };
-    if (endDate) filter.startTime = { ...filter.startTime, $lte: new Date(endDate) };
+    // ✅ date filtering (safe)
+    if (startDate || endDate) {
+      filter.startTime = {};
+      if (startDate) filter.startTime.$gte = new Date(startDate);
+      if (endDate) filter.startTime.$lte = new Date(endDate);
+    }
 
-    // Get all completed attendance records in range
-    const records = await Attendance.find(filter).sort({ startTime: -1 }).lean();
+    // Fetch attendance
+    const records = await Attendance.find(filter)
+      .sort({ startTime: -1 })
+      .lean();
 
     if (!records.length) {
       return { success: false, error: 'No attendance records found for this range.' };
     }
 
-    // Optional: only include professors still existing in DB
-    const professorIds = [...new Set(records.map(r => r.professorId?.toString()).filter(Boolean))];
+    // Get unique professors
+    const professorIds = [
+      ...new Set(records.map(r => r.professorId?.toString()).filter(Boolean))
+    ];
 
     const existingProfessors = await User.find({
       _id: { $in: professorIds },
       userType: 'professor'
-    }).select('_id fullName subject email').lean();
+    })
+      .select('_id fullName subject email')
+      .lean();
 
-    const existingProfessorSet = new Set(existingProfessors.map(p => p._id.toString()));
+    const existingProfessorSet = new Set(
+      existingProfessors.map(p => p._id.toString())
+    );
 
-    // Group by professorId
+    // Group attendance by professor
     const grouped = {};
     for (const rec of records) {
       const pid = rec.professorId?.toString();
       if (!pid) continue;
-
-      // ✅ skip if professor deleted
       if (!existingProfessorSet.has(pid)) continue;
 
       if (!grouped[pid]) grouped[pid] = [];
       grouped[pid].push(rec);
     }
+
     if (Object.keys(grouped).length === 0) {
       return {
         success: false,
@@ -69,16 +85,23 @@ export const exportAttendance = async (professorId = null, startDate = null, end
       };
     }
 
-
     const zip = new JSZip();
 
     for (const [pid, profRecords] of Object.entries(grouped)) {
-      const professor = existingProfessors.find(p => p._id.toString() === pid);
+      const professor = existingProfessors.find(
+        p => p._id.toString() === pid
+      );
 
       const data = profRecords.map(record => ({
-        'Date': record.startTime ? new Date(record.startTime).toLocaleDateString() : '',
-        'Start Time': record.startTime ? new Date(record.startTime).toLocaleTimeString() : '',
-        'End Time': record.endTime ? new Date(record.endTime).toLocaleTimeString() : '',
+        'Date': record.startTime
+          ? new Date(record.startTime).toLocaleDateString()
+          : '',
+        'Start Time': record.startTime
+          ? new Date(record.startTime).toLocaleTimeString()
+          : '',
+        'End Time': record.endTime
+          ? new Date(record.endTime).toLocaleTimeString()
+          : '',
         'Duration': formatDurationHMS(record.duration),
         'Duration (seconds)': record.duration ?? '',
         'Subject': record.subject || 'N/A',
@@ -94,10 +117,15 @@ export const exportAttendance = async (professorId = null, startDate = null, end
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
 
-      const safeName = (professor?.fullName || pid).replace(/[\\/:*?"<>|]/g, '_');
+      const safeName = (professor?.fullName || pid)
+        .replace(/[\\/:*?"<>|]/g, '_');
+
       const filename = `${safeName}_${pid}_attendance.xlsx`;
 
-      const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+      const buffer = XLSX.write(wb, {
+        type: 'buffer',
+        bookType: 'xlsx'
+      });
 
       zip.file(filename, buffer);
     }

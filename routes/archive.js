@@ -3,13 +3,15 @@ import { protect, adminOnly } from '../middleware/auth.js';
 import {
   getCleanupSummary,
   markArchiveComplete,
-  executeMonthlyCleanup
+  executeMonthlyCleanup,
+  clearAllDataKeepAccounts
 } from '../utils/cleanup.js';
 import {
   exportAttendance,
   exportAssessmentsToExcel,
 
 } from '../utils/export.js';
+import { testCleanupCheck } from '../utils/cleanupScheduler.js';
 
 const router = express.Router();
 
@@ -66,6 +68,33 @@ router.post('/cleanup', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// NEW: Clear all data (keeps user accounts)
+router.post('/clear-all', async (req, res) => {
+  try {
+    const { confirm } = req.body;
+    
+    if (confirm !== 'DELETE_ALL_DATA') {
+      return res.status(400).json({
+        success: false,
+        message: 'Confirmation text does not match. Please type "DELETE_ALL_DATA" to confirm.'
+      });
+    }
+    
+    const result = await clearAllDataKeepAccounts(
+      req.user._id,
+      req.user.fullName || req.user.email
+    );
+    
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error clearing data',
+      error: error.message
+    });
   }
 });
 
