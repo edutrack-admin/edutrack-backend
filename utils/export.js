@@ -1,12 +1,10 @@
 import JSZip from 'jszip';
 import XLSX from 'xlsx';
+import mongoose from 'mongoose';
 import Attendance from '../models/attendance.js';
 import Assessment from '../models/assessment.js';
 import User from '../models/user.js';
 
-
-const safeFilename = (name = 'Unknown') =>
-  name.replace(/[\/\\:*?"<>|]/g, '').trim();
 /**
  * Export utilities for generating Excel files
  */
