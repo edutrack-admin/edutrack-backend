@@ -1,3 +1,4 @@
+//routes/archive.js
 import express from 'express';
 import { protect, adminOnly } from '../middleware/auth.js';
 import {

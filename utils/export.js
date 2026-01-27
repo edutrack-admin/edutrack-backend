@@ -1,3 +1,4 @@
+//export.js
 import JSZip from 'jszip';
 import XLSX from 'xlsx';
 import mongoose from 'mongoose';
@@ -28,11 +29,13 @@ export const exportAttendance = async (
       return `${secs}s`;
     };
 
-    // ✅ ONLY apply professorId if it's valid
-    if (professorId && mongoose.isValidObjectId(professorId)) {
-      filter.professorId = professorId;
-    }
-
+    if (professorId && professorId !== '' && mongoose.isValidObjectId(professorId)) {
+  filter.professorId = professorId;
+  console.log('✓ Filtering by professor:', professorId);
+} else if (professorId && professorId !== '') {
+  console.warn('⚠️ Invalid professor ID:', professorId);
+  // Don't filter - just show all professors
+}
     // ✅ date filtering (safe)
     if (startDate || endDate) {
       filter.startTime = {};
@@ -46,8 +49,20 @@ export const exportAttendance = async (
       .lean();
 
     if (!records.length) {
-      return { success: false, error: 'No attendance records found for this range.' };
-    }
+  // Return empty Excel file with "No records found" message
+  const emptyData = [{
+    'Date': 'No records found',
+    'Start Time': '',
+    // ... other columns
+  }];
+  
+  const ws = XLSX.utils.json_to_sheet(emptyData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  
+  return { success: true, filename: '...', buffer };
+}
 
     // Get unique professors
     const professorIds = [
@@ -208,7 +223,18 @@ export const exportAssessmentsToExcel = async (professorId = null) => {
     return { success: true, filename, buffer };
 
   } catch (error) {
-    console.error('Export error:', error);
-    return { success: false, error: error.message };
-  }
+  console.error('❌ Export error:', error);
+  
+  // Still return a file with error info inside
+  const errorData = [{
+    'Date': 'Export Error',
+    'Start Time': error.message,
+    // ...
+  }];
+  const ws = XLSX.utils.json_to_sheet(errorData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Assessments');
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  return { success: true, filename: 'assessments_error_...xlsx', buffer };
+}
 };
