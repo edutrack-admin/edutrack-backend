@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import axios from 'axios';
 import Attendance from '../models/attendance.js';
 import Assessment from '../models/assessment.js';
-import User from '../models/user.js';
+import User from '../models/User.js';
 
 /**
  * Download image from URL and return as buffer

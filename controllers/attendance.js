@@ -122,14 +122,19 @@ export const endAttendance = async (req, res) => {
       });
     }
 
+    const endTime = new Date();
+    const duration = Math.floor((endTime - attendance.startTime) / 1000); // duration in seconds
+
+    console.log('⏱️ Duration calculation:');
+    console.log('  Start time:', attendance.startTime);
+    console.log('  End time:', endTime);
+    console.log('  Duration:', duration, 'seconds');
+
     // Upload end image to Cloudinary
     const endImageResult = await uploadToCloudinary(
       req.file.buffer,
       `attendance/${professorId}`
     );
-
-    const endTime = new Date();
-    const duration = Math.floor((endTime - attendance.startTime) / 1000); // duration in seconds
 
     attendance.endTime = endTime;
     attendance.endImage = {
