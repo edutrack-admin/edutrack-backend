@@ -24,11 +24,28 @@ router.use(adminOnly);
 // @access  Admin only
 router.get('/summary', async (req, res) => {
   try {
+    console.log('📊 Summary endpoint hit');
     const summary = await getCleanupSummary();
+    
+    // Check if summary has an error
+    if (summary.error) {
+      console.error('❌ Summary error:', summary.error);
+      return res.status(500).json({ 
+        success: false,
+        message: 'Error loading summary', 
+        error: summary.error 
+      });
+    }
+    
+    console.log('✅ Summary loaded successfully');
     res.json(summary);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('❌ Summary route error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 });
 
@@ -90,6 +107,7 @@ router.post('/clear-all', async (req, res) => {
     
     res.json(result);
   } catch (error) {
+    console.error('Clear all error:', error);
     res.status(500).json({
       success: false,
       message: 'Error clearing data',
@@ -104,19 +122,43 @@ router.post('/clear-all', async (req, res) => {
 router.get('/export/attendance', async (req, res) => {
   try {
     const { professorId, startDate, endDate } = req.query;
+
+    console.log('📥 Export attendance request:', { 
+      professorId: professorId || 'all', 
+      startDate, 
+      endDate 
+    });
     
     const result = await exportAttendance(professorId, startDate, endDate);
     
-    if (result.success) {
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename=${result.filename}`);
+    if (result.success && result.buffer) {
+      const contentType = result.filename.endsWith('.zip')
+        ? 'application/zip'
+        : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+      res.setHeader('Content-Length', result.buffer.length);
+      res.setHeader('Cache-Control', 'no-cache'); // ← Added
+      
+      console.log('✅ Sending file:', result.filename, `(${result.buffer.length} bytes)`, contentType);
       res.send(result.buffer);
     } else {
-      res.status(400).json(result);
+      // This should rarely happen now, but just in case
+      console.error('❌ Export failed:', result);
+      res.status(500).json({
+        success: false,
+        message: 'Export failed',
+        error: result.error || 'Unknown error'
+      });
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('❌ Export attendance route error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error during export', 
+      error: error.message 
+    });
   }
 });
 
@@ -125,20 +167,39 @@ router.get('/export/attendance', async (req, res) => {
 // @access  Admin only
 router.get('/export/assessments', async (req, res) => {
   try {
-    const { professorId } = req.query;
+    const { professorId, startDate, endDate } = req.query;
     
-    const result = await exportAssessmentsToExcel(professorId);
+    console.log('📥 Export assessments request:', { 
+      professorId: professorId || 'all',
+      startDate,
+      endDate 
+    });
     
-    if (result.success) {
+    const result = await exportAssessmentsToExcel(professorId, startDate, endDate);
+    
+    // ✅ Always treat as success now
+    if (result.success && result.buffer) {
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename=${result.filename}`);
+      res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+      res.setHeader('Content-Length', result.buffer.length);
+      
+      console.log('✅ Sending file:', result.filename, `(${result.buffer.length} bytes)`);
       res.send(result.buffer);
     } else {
-      res.status(400).json(result);
+      console.error('❌ Export failed:', result);
+      res.status(500).json({
+        success: false,
+        message: 'Export failed',
+        error: result.error || 'Unknown error'
+      });
     }
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('❌ Export assessments route error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error during export', 
+      error: error.message 
+    });
   }
 });
 
