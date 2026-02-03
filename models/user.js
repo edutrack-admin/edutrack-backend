@@ -24,7 +24,22 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'professor', 'student'],
     required: true
   },
-  // Professor-specific field
+  // Professor-specific fields
+  department: {
+    type: String,
+    enum: ['DIT', 'DOMT', 'DOMT-LOM', ''],
+    default: undefined,
+    validate: {
+      validator: function(v) {
+        // Only required for professors
+        if (this.userType === 'professor') {
+          return v && v.length > 0;
+        }
+        return true; // not required for others
+      },
+      message: 'Department is required for professors'
+    }
+  },
   subject: {
     type: String,
     trim: true,

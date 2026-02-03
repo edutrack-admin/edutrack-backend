@@ -14,7 +14,7 @@ router.use(adminOnly);
 // @access  Admin only
 router.post('/professor', async (req, res) => {
   try {
-    const { fullName, email, subject, temporaryPassword } = req.body;
+    const { fullName, email, department, subject, temporaryPassword } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -26,6 +26,7 @@ router.post('/professor', async (req, res) => {
       email,
       password: temporaryPassword,
       userType: 'professor',
+      department,  // ✅ Added department field
       subject,
       createdBy: req.user._id,
       isTemporaryPassword: true,
@@ -51,6 +52,7 @@ router.post('/professor', async (req, res) => {
       _id: professor._id,
       fullName: professor.fullName,
       email: professor.email,
+      department: professor.department,
       subject: professor.subject,
       message: 'Professor created successfully',
     });
@@ -60,6 +62,72 @@ router.post('/professor', async (req, res) => {
   }
 });
 
+// @route   PUT /api/users/professor/:id
+// @desc    Update professor account
+// @access  Admin only
+router.put('/professor/:id', async (req, res) => {
+  try {
+    const { fullName, email, department, subject } = req.body;
+
+    const professor = await User.findById(req.params.id);
+
+    if (!professor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Professor not found'
+      });
+    }
+
+    if (professor.userType !== 'professor') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a professor'
+      });
+    }
+
+    // Check if email is being changed and if it's already in use
+    if (email !== professor.email) {
+      const emailExists = await User.findOne({ 
+        email, 
+        _id: { $ne: req.params.id } 
+      });
+      
+      if (emailExists) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already in use'
+        });
+      }
+    }
+
+    // Update professor fields
+    professor.fullName = fullName;
+    professor.email = email;
+    professor.department = department;
+    professor.subject = subject;
+
+    await professor.save();
+
+    res.json({
+      success: true,
+      message: 'Professor updated successfully',
+      data: {
+        _id: professor._id,
+        fullName: professor.fullName,
+        email: professor.email,
+        department: professor.department,
+        subject: professor.subject
+      }
+    });
+  } catch (error) {
+    console.error('Update professor error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating professor',
+      error: error.message
+    });
+  }
+});
 
 // @route   POST /api/users/student
 // @desc    Create student account
