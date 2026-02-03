@@ -24,6 +24,36 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'professor', 'student'],
     required: true
   },
+  // Professor-specific fields - NOW ARRAYS for multiple assignments
+  departments: {
+    type: [String],
+    enum: ['DIT', 'DOMT', 'DOMT-LOM', ''],
+    default: undefined,
+    validate: {
+      validator: function(v) {
+        // Only required for professors
+        if (this.userType === 'professor') {
+          return v && v.length > 0;
+        }
+        return true;
+      },
+      message: 'At least one department is required for professors'
+    }
+  },
+  subjects: {
+    type: [String],
+    default: undefined,
+    validate: {
+      validator: function(v) {
+        // Only required for professors
+        if (this.userType === 'professor') {
+          return v && v.length > 0;
+        }
+        return true;
+      },
+      message: 'At least one subject is required for professors'
+    }
+  },
   // Professor-specific fields
   department: {
     type: String,

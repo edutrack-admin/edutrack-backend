@@ -14,7 +14,7 @@ router.use(adminOnly);
 // @access  Admin only
 router.post('/professor', async (req, res) => {
   try {
-    const { fullName, email, department, subject, temporaryPassword } = req.body;
+    const { fullName, email, departments, subjects, temporaryPassword } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -26,8 +26,8 @@ router.post('/professor', async (req, res) => {
       email,
       password: temporaryPassword,
       userType: 'professor',
-      department,  // ✅ Added department field
-      subject,
+      departments,  // ✅ Added department field
+      subjects,
       createdBy: req.user._id,
       isTemporaryPassword: true,
     });
@@ -52,8 +52,8 @@ router.post('/professor', async (req, res) => {
       _id: professor._id,
       fullName: professor.fullName,
       email: professor.email,
-      department: professor.department,
-      subject: professor.subject,
+      departments: professor.departments,
+      subjects: professor.subjects,
       message: 'Professor created successfully',
     });
   } catch (error) {
@@ -67,7 +67,7 @@ router.post('/professor', async (req, res) => {
 // @access  Admin only
 router.put('/professor/:id', async (req, res) => {
   try {
-    const { fullName, email, department, subject } = req.body;
+    const { fullName, email, departments, subjects } = req.body;
 
     const professor = await User.findById(req.params.id);
 
@@ -103,8 +103,8 @@ router.put('/professor/:id', async (req, res) => {
     // Update professor fields
     professor.fullName = fullName;
     professor.email = email;
-    professor.department = department;
-    professor.subject = subject;
+    professor.departments = departments;
+    professor.subjects = subjects;
 
     await professor.save();
 
@@ -115,8 +115,8 @@ router.put('/professor/:id', async (req, res) => {
         _id: professor._id,
         fullName: professor.fullName,
         email: professor.email,
-        department: professor.department,
-        subject: professor.subject
+        departments: professor.departments,
+        subjects: professor.subjects
       }
     });
   } catch (error) {
