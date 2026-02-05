@@ -39,6 +39,8 @@ import assessmentRoutes from './routes/assessments.js';
 import publicRoutes from './routes/public.js';
 import attendanceRoutes from './routes/attendance.js';
 import cleanupRoutes from './routes/cleanup.js';
+import sectionRoutes from './routes/section.js';
+import studentAttendanceRoutes from './routes/studAttendance.js';
 
 
 // Routes
@@ -49,6 +51,8 @@ app.use('/api/archive', archiveRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/cleanup', cleanupRoutes);
+app.use('/api/sections', sectionRoutes);
+app.use('/api/student-attendance', studentAttendanceRoutes);
 
 // Root route - MUST work!
 app.get('/', (req, res) => {

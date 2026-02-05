@@ -57,33 +57,11 @@ const userSchema = new mongoose.Schema({
   // Professor-specific fields
   department: {
     type: String,
-    enum: ['DIT', 'DOMT', 'DOMT-LOM', ''],
-    default: undefined,
-    validate: {
-      validator: function(v) {
-        // Only required for professors
-        if (this.userType === 'professor') {
-          return v && v.length > 0;
-        }
-        return true; // not required for others
-      },
-      message: 'Department is required for professors'
-    }
+    default: undefined
   },
   subject: {
     type: String,
-    trim: true,
-    default: undefined,
-    validate: {
-      validator: function(v) {
-        // Only required for professors
-        if (this.userType === 'professor') {
-          return v && v.length > 0;
-        }
-        return true; // not required for others
-      },
-      message: 'Subject is required for professors'
-    }
+    default: undefined
   },
   // Student-specific field
   role: {
