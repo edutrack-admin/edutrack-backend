@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const sectionSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
+    unique: true,
     trim: true,
     unique: true
     // Auto-generated format: "DIT 3-1", "DOMT 2-2", etc.
@@ -16,7 +16,7 @@ const sectionSchema = new mongoose.Schema({
   yearLevel: {
     type: Number,
     min: 1,
-    max: 4,
+    max: 3,
     required: true
   },
   sectionNumber: {
