@@ -45,9 +45,8 @@ const sectionSchema = new mongoose.Schema({
 sectionSchema.index({ department: 1, yearLevel: 1, sectionNumber: 1 }, { unique: true });
 
 // Pre-save hook to auto-generate name
-sectionSchema.pre('save', function(next) {
+sectionSchema.pre('save', function() {
   this.name = `${this.department} ${this.yearLevel}-${this.sectionNumber}`;
-  next();
 });
 
 const Section = mongoose.model('Section', sectionSchema);
