@@ -26,7 +26,7 @@ router.post('/professor', async (req, res) => {
       email,
       password: temporaryPassword,
       userType: 'professor',
-      departments,  // ✅ Added department field
+      departments,
       subjects,
       createdBy: req.user._id,
       isTemporaryPassword: true,
@@ -141,23 +141,27 @@ router.post('/student', async (req, res) => {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
+    // Convert section string to ObjectId if provided
+    const mongoose = await import('mongoose');
+    const sectionObjectId = section ? new mongoose.default.Types.ObjectId(section) : undefined;
+
     const student = await User.create({
       fullName,
       email,
       password: temporaryPassword,
       userType: 'student',
       role,
-      section: section || undefined, // Optional section assignment
+      section: sectionObjectId, 
       createdBy: req.user._id,
       isTemporaryPassword: true,
       emailVerified: true,
     });
 
     // If section provided, add student to section's students array
-    if (section) {
+    if (sectionObjectId) {
       const Section = (await import('../models/section.js')).default;
       await Section.findByIdAndUpdate(
-        section,
+        sectionObjectId,
         { $addToSet: { students: student._id } }
       );
     }
