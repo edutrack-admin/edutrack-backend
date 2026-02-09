@@ -147,10 +147,20 @@ router.post('/student', async (req, res) => {
       password: temporaryPassword,
       userType: 'student',
       role,
+      section: section || undefined, // Optional section assignment
       createdBy: req.user._id,
       isTemporaryPassword: true,
       emailVerified: true,
     });
+
+    // If section provided, add student to section's students array
+    if (section) {
+      const Section = (await import('../models/section.js')).default;
+      await Section.findByIdAndUpdate(
+        section,
+        { $addToSet: { students: student._id } }
+      );
+    }
 
     // 📧 Send email (non-blocking)
     try {

@@ -179,9 +179,13 @@ router.post('/:id/students', async (req, res) => {
       return res.status(404).json({ message: 'Section not found' });
     }
 
+    // Convert string IDs to ObjectIds
+    const mongoose = await import('mongoose');
+    const studentObjectIds = studentIds.map(id => new mongoose.default.Types.ObjectId(id));
+
     // Verify all IDs are valid students
     const students = await User.find({
-      _id: { $in: studentIds },
+      _id: { $in: studentObjectIds },
       userType: 'student'
     });
 

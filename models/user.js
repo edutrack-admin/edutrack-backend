@@ -80,9 +80,9 @@ const userSchema = new mongoose.Schema({
     }
   },
   section: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: 'Section',
-  default: undefined
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Section',
+    default: undefined
   },
   emailVerified: {
     type: Boolean,
