@@ -134,7 +134,7 @@ router.put('/professor/:id', async (req, res) => {
 // @access  Admin only
 router.post('/student', async (req, res) => {
   try {
-    const { fullName, email, role, temporaryPassword } = req.body;
+    const { fullName, email, role, section, temporaryPassword } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
