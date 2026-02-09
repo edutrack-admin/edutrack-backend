@@ -79,6 +79,11 @@ const userSchema = new mongoose.Schema({
       message: 'Role is required for students'
     }
   },
+  section: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Section',
+  default: undefined
+  },
   emailVerified: {
     type: Boolean,
     default: false
