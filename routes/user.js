@@ -217,6 +217,7 @@ router.get('/professors', async (req, res) => {
 router.get('/students', async (req, res) => {
   try {
     const students = await User.find({ userType: 'student' })
+      .populate('section', 'name department yearLevel sectionNumber')
       .select('-password')
       .sort({ createdAt: -1 });
 
