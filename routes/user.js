@@ -220,7 +220,7 @@ router.get('/students', async (req, res) => {
       .populate('section', 'name department yearLevel sectionNumber')
       .select('-password')
       .sort({ createdAt: -1 });
-
+      
     res.json(students);
   } catch (error) {
     console.error(error);
