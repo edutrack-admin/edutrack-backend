@@ -1,4 +1,4 @@
-// models/Attendance.js
+// models/Attendance.js - Phase 3 Updated
 import mongoose from 'mongoose';
 
 const attendanceSchema = new mongoose.Schema({
@@ -7,6 +7,9 @@ const attendanceSchema = new mongoose.Schema({
     ref: 'User',
     required: [true, 'Professor ID is required'],
     index: true
+  },
+  professorName: {
+    type: String // Add this for easier querying
   },
   subject: {
     type: String,
@@ -38,7 +41,6 @@ const attendanceSchema = new mongoose.Schema({
     type: Date,
     validate: {
       validator: function(value) {
-        // endTime should be after startTime
         return !value || value > this.startTime;
       },
       message: 'End time must be after start time'
@@ -68,12 +70,15 @@ const attendanceSchema = new mongoose.Schema({
     default: 'ongoing',
     index: true
   },
-  // Optional: Add student attendance records
+  
+  // Student attendance records (UPDATED for Phase 3)
   students: [{
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
     },
+    studentName: String, // Add for easier display
+    studentEmail: String, // Add for easier display
     status: {
       type: String,
       enum: ['present', 'absent', 'late', 'excused'],
@@ -81,6 +86,20 @@ const attendanceSchema = new mongoose.Schema({
     },
     remarks: String
   }],
+  
+  // NEW: Assessment tracking for Phase 3
+  assessmentCount: {
+    type: Number,
+    default: 0
+  },
+  assessedBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  assessmentDeadline: {
+    type: Date // Optional
+  },
+  
   // Metadata
   metadata: {
     deviceInfo: String,
@@ -91,13 +110,14 @@ const attendanceSchema = new mongoose.Schema({
     }
   }
 }, {
-  timestamps: true // Adds createdAt and updatedAt
+  timestamps: true
 });
 
 // Indexes for better query performance
 attendanceSchema.index({ professorId: 1, startTime: -1 });
 attendanceSchema.index({ professorId: 1, subject: 1, section: 1 });
 attendanceSchema.index({ status: 1, startTime: -1 });
+attendanceSchema.index({ 'students.studentId': 1 }); // For querying by student
 
 // Virtual for formatted duration
 attendanceSchema.virtual('formattedDuration').get(function() {
@@ -115,6 +135,21 @@ attendanceSchema.virtual('formattedDuration').get(function() {
     return `${seconds}s`;
   }
 });
+
+// NEW: Method to check if student attended this session
+attendanceSchema.methods.studentAttended = function(studentId) {
+  return this.students.some(
+    att => att.studentId && att.studentId.toString() === studentId.toString() && 
+    ['present', 'late'].includes(att.status)
+  );
+};
+
+// NEW: Method to check if student already assessed
+attendanceSchema.methods.studentAssessed = function(studentId) {
+  return this.assessedBy.some(
+    id => id.toString() === studentId.toString()
+  );
+};
 
 // Method to calculate duration if not set
 attendanceSchema.methods.calculateDuration = function() {

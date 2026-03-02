@@ -1,6 +1,14 @@
+// models/Assessment.js - Phase 3 Updated
 import mongoose from 'mongoose';
 
 const assessmentSchema = new mongoose.Schema({
+  // NEW: Link to attendance session (Phase 3)
+  attendanceSession: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Attendance'
+    // NOTE: Not required to maintain backward compatibility with existing assessments
+  },
+  
   professor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -19,8 +27,8 @@ const assessmentSchema = new mongoose.Schema({
     required: true
   },
   classDateTime: {
-  type: Date,
-  required: true
+    type: Date,
+    required: true
   },
   student: {
     type: mongoose.Schema.Types.ObjectId,
@@ -67,6 +75,9 @@ const assessmentSchema = new mongoose.Schema({
 // Index for faster queries
 assessmentSchema.index({ professor: 1, createdAt: -1 });
 assessmentSchema.index({ student: 1 });
+// NEW: Index for session-based queries
+assessmentSchema.index({ attendanceSession: 1, student: 1 });
+assessmentSchema.index({ attendanceSession: 1 });
 
 const Assessment = mongoose.model('Assessment', assessmentSchema);
 

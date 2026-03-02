@@ -42,6 +42,7 @@ import cleanupRoutes from './routes/cleanup.js';
 import sectionRoutes from './routes/section.js';
 import studentAttendanceRoutes from './routes/studAttendance.js';
 import submissionRoutes from './models/submission.js';
+import sessionAssessmentsRoutes from './routes/assessments_modal.js';
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -54,6 +55,7 @@ app.use('/api/cleanup', cleanupRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/student-attendance', studentAttendanceRoutes);
 app.use('/api/submissions', submissionRoutes);
+app.use('/api/session-assessments', sessionAssessmentsRoutes);
 
 // Root route - MUST work!
 app.get('/', (req, res) => {
